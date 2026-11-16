@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Portal — Admin</title>
+<style>
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; height:auto; min-height:100vh; overflow-y:auto;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:#f5f6fa; color:#222; }
+  .wrap { max-width:960px; margin:0 auto; padding:16px 16px 60px; }
+  h1 { color:#1a1a2e; font-size:1.4rem; margin:8px 0 4px; }
+  .sub { color:#666; font-size:.9rem; margin:0 0 20px; }
+  .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  input[type=password] { width:100%; padding:14px; font-size:1rem; border:2px solid #e3e5ec;
+    border-radius:10px; margin-bottom:12px; }
+  .btn { display:block; width:100%; padding:14px; font-size:1rem; font-weight:700;
+    border:none; border-radius:12px; cursor:pointer; background:#1a1a2e; color:#fff; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn.blue { background:#2563eb; }
+  .btnrow { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+  .btnrow .btn { flex:1; }
+  .hidden { display:none; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:10px 8px; border-bottom:1px solid #eee; font-size:.93rem; vertical-align:top; }
+  th { color:#888; font-size:.8rem; text-transform:uppercase; }
+  .err { background:#fdecea; color:#b71c1c; border-radius:10px; padding:12px; margin-bottom:12px; font-size:.92rem; }
+  .stat { display:inline-block; margin-right:18px; color:#555; font-size:.9rem; }
+  .stat b { color:#1a1a2e; }
+  .mini { background:#1a1a2e; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:.78rem; }
+  .mini.blue { background:#2563eb; }
+  .reviewrow td { background:#fafafa; }
+  .reviewlist { padding:4px 10px; max-height:60vh; overflow-y:auto; }
+  .revitem { padding:10px 0; border-bottom:1px dashed #ddd; font-size:.88rem; }
+  .revitem:last-child { border-bottom:none; }
+  .rq { font-weight:700; margin-bottom:3px; }
+  .ra { color:#1a1a2e; white-space:pre-wrap; margin:2px 0; }
+  .rpoin { color:#92400e; font-weight:700; font-size:.75rem; }
+  .rb { color:#b91c1c; font-weight:700; }
+  .secpill { display:inline-block; font-weight:700; font-size:.68rem; padding:1px 7px; border-radius:999px; color:#fff; margin-right:5px; }
+  .secpill.A { background:#2563eb; } .secpill.B { background:#7c3aed; } .secpill.C { background:#dc2626; }
+  .gradenote { color:#64748b; font-size:.82rem; }
+  .okbadge { background:#e8f5e9; color:#2e7d32; border-radius:8px; padding:2px 8px; font-size:.72rem; }
+  .runbadge { background:#eef2ff; color:#2563eb; border-radius:8px; padding:2px 8px; font-size:.72rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Exam Portal — Admin</h1>
+  <p class="sub">Semua jawaban dinilai manual. Export Excel untuk menilai di luar.</p>
+
+  <div id="login" class="card">
+    <input type="password" id="key" placeholder="Admin key" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" id="btnLoad" onclick="doLogin()">Unlock</button>
+  </div>
+
+  <div id="board" class="hidden">
+    <div class="card">
+      <span class="stat">Attempts: <b id="statCount">0</b></span>
+      <span class="stat">Students: <b id="statStudents">0</b></span>
+      <span class="stat" id="statPoinWrap">Total poin kuis: <b id="statPoin">100</b></span>
+    </div>
+    <div class="btnrow">
+      <button class="btn blue" onclick="exportFile()" id="btnXlsx">⬇ Excel (.xlsx)</button>
+      <button class="btn" onclick="refreshAll()" id="btnRefresh">↻ Refresh</button>
+    </div>
+    <div class="card" id="tableWrap"></div>
+  </div>
+
+  <div class="err hidden" id="err"></div>
+</div>
+
+<script>
+// Set at runtime from the login field; never ship a key in the page.
+const KEY = "";
+let rows = [];
+let adminKey = "";
+
+async function doLogin() {
+  const k = document.getElementById("key").value.trim();
+  if (!k) { showErr("Masukkan admin key."); return; }
+  adminKey = k;
+  await fetchBoard(k);
+}
+async function fetchBoard(k) {
+  hideErr();
+  const btn = document.getElementById("btnLoad");
+  if (btn && !btn.disabled) { btn.disabled = true; btn.textContent = "Loading…"; }
+  try {
+    const r = await fetch("/api/scoreboard", {headers: {"X-Admin-Key": k}});
+    const data = await r.json();
+    if (!r.ok) { throw {message: data.detail || "Failed"}; }
+    rows = data;
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("board").classList.remove("hidden");
+    localStorage.setItem("quizKey", k);
+    renderBoard();
+  } catch (e) {
+    showErr(e.message || "Invalid key or server error.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "Unlock"; }
+  }
+}
+
+function renderBoard() {
+  const students = new Set(rows.map(r => String(r.nim).toLowerCase()));
+  document.getElementById("statStudents").textContent = students.size;
+  document.getElementById("statCount").textContent = rows.length;
+  let html = rows.length
+    ? `<table><thead><tr><th>#</th><th>NIM</th><th>Name</th><th>Run</th><th>Mulai</th><th>Kirim</th><th></th></tr></thead><tbody>`
+    : "";
+  rows.forEach((r, i) => {
+    const started = new Date((r.started_at || r.submitted_at) * 1000).toLocaleString("id-ID", {timeZone:"Asia/Jakarta"});
+    const subTxt = r.status === "submitted"
+      ? (r.submitted_at ? new Date(r.submitted_at * 1000).toLocaleString("id-ID", {timeZone:"Asia/Jakarta"}) : started)
+      : '<span class="gradenote">masih berjalan…</span>';
+    const stBadge = r.status === "submitted"
+      ? `<span class="okbadge">terkirim</span>`
+      : `<span class="runbadge">berjalan</span>`;
+    const runCell = r.total_attempts > 1 ? `${r.attempt_no}/${r.total_attempts}` : "1";
+    const dupTag = r.total_attempts > 1 ? ` <span class="gradenote">(cek: ${r.total_attempts}x)</span>` : "";
+    const delAll = r.total_attempts > 1 ? ` <button class="mini" style="background:#b91c1c" onclick="delAllNim('${escapeHtml(r.nim)}', '${escapeHtml(r.name)}', ${r.total_attempts})">hapus semua</button>` : "";
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(r.nim)}</td><td>${escapeHtml(r.name)} ${stBadge}${dupTag}${delAll}</td>
+      <td>${runCell}</td><td>${started}</td><td>${subTxt}</td>
+      <td><button class="mini blue" onclick="toggleReview(${i})">jawaban</button> <button class="mini" style="background:#b91c1c" onclick="delAttempt(${r.id || 0}, '${escapeHtml(r.nim)}', '${escapeHtml(r.name)}')">🗑 hapus</button></td></tr>`;
+    html += `<tr class="reviewrow" id="revrow${i}" style="display:none"><td colspan="7"><div class="reviewlist">`;
+    // group by question id, then by sub (inputs fold under their sub)
+    const byQ = {};
+    r.details.forEach(d => {
+      (byQ[d.qid] = byQ[d.qid] || []).push(d);
+    });
+    Object.keys(byQ).sort((a,b)=>Number(a)-Number(b)).forEach(qid => {
+      const parts = byQ[qid];
+      const p0 = parts[0];
+      const qPoin = p0.q_points != null ? p0.q_points : parts.reduce((s,p)=>s+p.points,0);
+      html += `<div class="revitem">
+        <div class="rq"><span class="secpill ${p0.section}">${p0.section}</span>Soal ${qid} · ${escapeHtml(p0.topic)} <span class="rpoin">${qPoin} poin</span></div>`;
+      // plain question (mcq/text) — single detail, no sub_key
+      if (parts.length === 1 && p0.sub_key == null) {
+        html += `<div class="ra">${p0.given ? escapeHtml(p0.given) : '<span class="rb">(kosong)</span>'}</div>`;
+      } else {
+        // group details under their sub_key (a/b/c)
+        const bySub = {};
+        parts.forEach(p => { (bySub[p.sub_key] = bySub[p.sub_key] || []).push(p); });
+        Object.keys(bySub).forEach(sk => {
+          const subParts = bySub[sk];
+          const sp0 = subParts[0];
+          html += `<div class="ra"><b>${sk})</b> [${sp0.sub_points || sp0.points} poin]`;
+          if (subParts.length === 1 && sp0.inkey == null) {
+            html += ` ${sp0.given ? escapeHtml(sp0.given) : '<span class="rb">(kosong)</span>'}`;
+          } else {
+            subParts.forEach(p => {
+              const lbl = p.inlabel || "•";
+              html += `<div style="padding-left:14px">• <b>${escapeHtml(lbl)}</b>: ${p.given ? escapeHtml(p.given) : '<span class="rb">(kosong)</span>'}</div>`;
+            });
+          }
+          html += `</div>`;
+        });
+      }
+      html += `</div>`;
+    });
+    html += `</div></td></tr>`;
+  });
+  html += rows.length ? `</tbody></table>` : "<p>Belum ada jawaban masuk.</p>";
+  document.getElementById("tableWrap").innerHTML = html;
+}
+function toggleReview(i) {
+  const row = document.getElementById("revrow" + i);
+  if (row) row.style.display = row.style.display === "none" ? "" : "none";
+}
+
+async function exportFile() {
+  const k = adminKey || localStorage.getItem("quizKey") || "";
+  const ep = "/api/export_xlsx";
+  const btn = document.getElementById("btnXlsx");
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = "Generating…";
+  try {
+    const r = await fetch(ep, {headers: {"X-Admin-Key": k}});
+    if (!r.ok) { let d = {}; try { d = await r.json(); } catch (_) {} throw {message: d.detail || "Export failed"}; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const fname = "midterm_ai_attempts.xlsx";
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  } catch (e) {
+    showErr(e.message || "Export failed.");
+  } finally {
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+async function refreshAll() {
+  const k = adminKey || localStorage.getItem("quizKey") || document.getElementById("key").value.trim();
+  if (k) await fetchBoard(k);
+}
+
+async function delAttempt(id, nim, name) {
+  if (!id) { showErr("Attempt id tidak ditemukan."); return; }
+  if (!confirm(`Hapus attempt #${id} milik ${nim} (${name})?\n\nSiswa bisa mengulang dari awal setelah ini. Tindakan tidak bisa dibatalkan.`)) return;
+  try {
+    const k = adminKey || localStorage.getItem("quizKey") || "";
+    const r = await fetch(`/api/attempts/${id}`, {method: "DELETE", headers: {"X-Admin-Key": k}});
+    if (!r.ok) { let d = {}; try { d = await r.json(); } catch (_) {} throw {message: d.detail || "Gagal menghapus"}; }
+    await refreshAll();
+  } catch (e) { showErr(e.message || "Gagal menghapus attempt."); }
+}
+async function delAllNim(nim, name, n) {
+  if (!confirm(`Hapus SEMUA ${n} attempt milik ${nim} (${name})?\n\nSiswa bisa mulai benar-benar dari nol. Tindakan tidak bisa dibatalkan.`)) return;
+  try {
+    const k = adminKey || localStorage.getItem("quizKey") || "";
+    const r = await fetch(`/api/attempts?nim=${encodeURIComponent(nim)}`, {method: "DELETE", headers: {"X-Admin-Key": k}});
+    if (!r.ok) { let d = {}; try { d = await r.json(); } catch (_) {} throw {message: d.detail || "Gagal menghapus"}; }
+    await refreshAll();
+  } catch (e) { showErr(e.message || "Gagal menghapus attempt."); }
+}
+
+function showErr(m) { const e = document.getElementById("err"); e.textContent = m; e.classList.remove("hidden"); }
+function hideErr() { document.getElementById("err").classList.add("hidden"); }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>

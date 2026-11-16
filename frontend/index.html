@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Portal</title>
+<style>
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; height:auto; min-height:100vh; overflow-y:auto;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:#f5f6fa; color:#222; }
+  .wrap { max-width:760px; margin:0 auto; padding:16px 16px 60px; }
+  h1 { color:#1a1a2e; font-size:1.5rem; margin:8px 0 4px; }
+  .sub { color:#666; font-size:.9rem; margin:0 0 20px; }
+  .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .qnum { font-weight:700; color:#2563eb; font-size:.85rem; text-transform:uppercase; }
+  .topic { color:#888; font-size:.8rem; margin-left:8px; }
+  .secpill { display:inline-block; font-weight:700; font-size:.72rem; padding:2px 8px;
+    border-radius:999px; color:#fff; margin-right:6px; vertical-align:middle; }
+  .secpill.A { background:#2563eb; } .secpill.B { background:#7c3aed; } .secpill.C { background:#dc2626; }
+  .poinpill { display:inline-block; font-weight:700; font-size:.75rem; padding:3px 10px;
+    border-radius:999px; background:#eef2ff; color:#2563eb; border:1px solid #c7d2fe; margin-left:8px; }
+  .qtext { font-size:1.05rem; margin:8px 0 12px; line-height:1.5; white-space:pre-wrap; }
+  label.opt { display:block; padding:12px 14px; border:2px solid #e3e5ec; border-radius:10px;
+    margin-bottom:8px; cursor:pointer; transition:.15s; font-size:.98rem; line-height:1.4; }
+  label.opt:hover { border-color:#2563eb; background:#eff6ff; }
+  label.opt input { margin-right:10px; transform:scale(1.15); }
+  label.opt.sel { border-color:#2563eb; background:#dbeafe; font-weight:600; }
+  .btn { display:block; width:100%; padding:15px; font-size:1.05rem; font-weight:700;
+    border:none; border-radius:12px; cursor:pointer; background:#1a1a2e; color:#fff; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn.green { background:#2ecc71; }
+  .btn.blue { background:#2563eb; }
+  .btn.outline { background:#fff; color:#1a1a2e; border:2px solid #1a1a2e; }
+  .btn.prev { background:#fff; color:#1a1a2e; border:2px solid #1a1a2e; }
+  .navrow { display:flex; gap:10px; }
+  .navrow .btn { flex:1; }
+  input[type=text] { width:100%; padding:14px; font-size:1rem; border:2px solid #e3e5ec;
+    border-radius:10px; margin-bottom:14px; background:#fff; color:#222; }
+  input[type=text]:focus { outline:none; border-color:#2563eb; }
+  .datatable { width:100%; border-collapse:collapse; margin:6px 0 14px; font-size:.92rem; }
+  .datatable caption { text-align:left; font-weight:700; font-size:.85rem; color:#475569;
+    text-transform:uppercase; letter-spacing:.02em; padding-bottom:6px; }
+  .datatable th, .datatable td { text-align:left; padding:7px 10px; border:1px solid #e3e5ec; }
+  .datatable th { background:#f1f5f9; color:#475569; font-size:.8rem; }
+  .datatable td { background:#fff; }
+  .ptstable { width:100%; border-collapse:collapse; margin:4px 0 14px; font-size:.95rem; }
+  .ptstable th, .ptstable td { text-align:left; padding:8px 10px; border:1px solid #e3e5ec; }
+  .ptstable th { background:#f1f5f9; color:#475569; font-size:.8rem; text-transform:uppercase; }
+  .hintbox { background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 12px;
+    font-size:.92rem; margin:0 0 14px; color:#78350f; line-height:1.45; }
+  .subblock { margin:6px 0 16px; }
+  .subhead { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
+  .subkey { font-weight:800; color:#1a1a2e; font-size:1.05rem; }
+  .subpoin { font-weight:700; font-size:.75rem; padding:2px 8px; border-radius:999px;
+    background:#fef3c7; color:#92400e; }
+  textarea.txtin { width:100%; min-height:90px; padding:12px; font-size:1rem; line-height:1.45;
+    border:2px solid #e3e5ec; border-radius:10px; background:#fff; color:#222;
+    font-family:inherit; resize:vertical; }
+  textarea.txtin:focus { outline:none; border-color:#2563eb; }
+  input.numline { width:100%; max-width:260px; padding:13px 14px; font-size:1.1rem; font-weight:600;
+    border:2px solid #e3e5ec; border-radius:10px; background:#fff; color:#222; font-family:inherit; }
+  input.numline:focus { outline:none; border-color:#2563eb; }
+  .numfield label { display:block; font-weight:700; margin-bottom:6px; color:#475569; font-size:.85rem; }
+  .numfield { margin:4px 0 8px; }
+  .ingrid { display:grid; gap:10px; margin:6px 0 14px; }
+  .infield label { display:block; font-weight:700; margin-bottom:5px; color:#475569; font-size:.8rem; }
+  .infield input.numline { width:100%; max-width:none; padding:10px 12px; font-size:1rem; }
+  .infield input.txtline { width:100%; padding:10px 12px; font-size:.95rem; border:2px solid #e3e5ec;
+    border-radius:10px; background:#fff; color:#222; font-family:inherit; }
+  .infield input.txtline:focus { outline:none; border-color:#2563eb; }
+  .prog { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;
+    color:#888; font-size:.85rem; }
+  .pbar { height:8px; background:#e3e5ec; border-radius:4px; overflow:hidden; margin:0 0 14px; }
+  .pbar-fill { height:100%; background:#2563eb; width:0%; border-radius:4px; transition:width .25s ease; }
+  .timer { font-weight:700; color:#666; font-variant-numeric:tabular-nums; }
+  .timer.warn { color:#e74c3c; }
+  .pickhint { font-size:.88rem; color:#888; margin:8px 0 6px; transition:.2s; }
+  .pickhint.ready { color:#2ecc71; font-weight:600; }
+  .okbox { border-radius:12px; padding:20px; text-align:center; background:#e8f5e9; color:#2e7d32;
+    font-size:1.1rem; font-weight:700; margin-bottom:16px; }
+  .hidden { display:none; }
+  .flagbtn { border:2px solid #d0d5e0; background:#fff; color:#475569; font-size:.92rem; font-weight:700; padding:10px 16px; border-radius:999px; cursor:pointer; white-space:nowrap; line-height:1; }
+  .flagbtn.on { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+  .sumrow { display:flex; align-items:center; gap:10px; padding:11px 8px; border-bottom:1px solid #eef2f7; cursor:pointer; border-radius:8px; }
+  .sumrow:hover { background:#f0f7ff; }
+  .sumrow .idx { font-weight:700; color:#2563eb; font-size:1rem; min-width:44px; }
+  .sumrow .ans { flex:1; min-width:0; font-weight:600; color:#1a1a2e; font-size:.9rem; line-height:1.35; }
+  .sumrow .ans .lbl { font-weight:400; color:#64748b; }
+  .sumrow .ans.missing { color:#b91c1c; font-weight:700; }
+  .sumrow .ans.missing .lbl { color:#b91c1c; font-weight:700; }
+  .sumflag { font-size:.75rem; font-weight:700; color:#92400e; background:#fef3c7; border:1px solid #fcd34d; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+  .ansprev { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <h1>Exam Portal</h1>
+  <p class="sub" id="subline">Masukkan NIM dan nama untuk memulai ujian.</p>
+
+  <!-- START -->
+  <div id="start" class="card">
+    <p style="margin-top:0;font-weight:700">Mulai ujian</p>
+    <p style="margin-top:0">Masukkan NIM dan nama lengkap untuk memulai.</p>
+    <input type="text" id="nim" placeholder="NIM" autocomplete="off">
+    <input type="text" id="name" placeholder="Nama lengkap" autocomplete="name">
+    <button class="btn" id="btnStart" onclick="startQuiz()">Mulai Kuis</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="hidden">
+    <div id="resumeBanner" class="hidden" style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:.9rem;color:#075985">
+      ↩️ Sesi dilanjutkan — jawaban Anda tersimpan otomatis.
+    </div>
+    <div class="prog">
+      <span id="qpos"></span>
+      <span class="timer" id="timer">90:00</span>
+    </div>
+    <div class="pbar"><div class="pbar-fill" id="pfill"></div></div>
+    <div id="qcard"></div>
+    <div class="pickhint" id="pickhint">Jawaban tersimpan otomatis — bisa diubah kapan saja.</div>
+    <div class="navrow">
+      <button class="btn prev hidden" id="btnPrev" onclick="prev()">Sebelumnya</button>
+      <button class="btn hidden" id="btnNext" onclick="next()">Berikutnya</button>
+      <button class="btn green hidden" id="btnSubmit" onclick="openConfirm()">Periksa Jawaban</button>
+    </div>
+    <div style="margin-top:12px" id="wrapRingkasan">
+      <button type="button" class="btn outline" onclick="openConfirm()">📋 Ringkasan Jawaban</button>
+    </div>
+  </div>
+
+  <!-- KONFIRMASI -->
+  <div id="confirm" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <p style="margin:0;font-weight:700;font-size:1.05rem">📋 Ringkasan Jawaban Anda</p>
+      <button type="button" class="btn outline" style="width:auto;padding:8px 12px;font-size:.8rem;margin:0" onclick="goBackToQuiz()">← Ubah jawaban</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 0">
+      <p style="margin:0;font-size:.85rem;color:#666">Jawaban <b>belum terkirim</b>. Periksa dulu — kirim ada di bagian paling bawah.</p>
+      <span class="timer" id="ctimer">--:--</span>
+    </div>
+    <div id="answersummary" style="margin:10px 0 4px"></div>
+    <div style="margin:20px 0 0;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px">
+      <div style="font-weight:700;font-size:.9rem">✏️ Coret-coretan (opsional)</div>
+      <p style="margin:4px 0 8px;font-size:.82rem;color:#666">Tidak wajib. Kalau ada perhitungan manual yang ingin dilampirkan, unggah lewat Google Form. Link-nya:</p>
+      <p style="margin:0;text-align:center;font-family:monospace;font-size:1.05rem;font-weight:700;color:#2563eb;word-break:break-all" id="coretanLinkText"></p>
+    </div>
+    <div style="margin:26px 0 0;padding-top:18px;border-top:2px dashed #cbd5e1;text-align:center">
+      <p style="margin:0 0 12px;font-size:.9rem;color:#334155"><b>Sudah selesai memeriksa?</b><br>
+        <span style="font-size:.78rem;color:#94a3b8">Setelah terkirim, jawaban tidak bisa diubah lagi.</span></p>
+      <button class="btn green" id="btnConfirm" onclick="submitQuiz()">✓ Kirim Jawaban</button>
+    </div>
+  </div>
+
+  <div id="result" class="hidden"></div>
+</div>
+
+<script>
+const CORETAN_URL = "https://bit.ly/PPTIKuisAI";  // GANTI: link Google Form coretan asli ujian
+const LS_SESS = "ksf_sess_v1";   // {attempt_id, nim, name, started_at, duration_seconds}
+const LS_ANS = "ksf_ans_v1";     // {attempt_id, answers:{...}} local mirror for offline resilience
+let QUESTIONS = [];
+let ANSWERS = {};          // slot id -> value ("1"=mcq idx, "6"=text, "10a"=sub)
+let SECTION_NAMES = {A:"Bagian A — Pilihan Ganda", B:"Bagian B — Esai Singkat", C:"Bagian C — Hitungan & Aplikasi"};
+let NIM = "", NAME = "";
+let ATTEMPT_ID = null;
+let DEADLINE = 0;          // server epoch when time is up (started_at + duration)
+let SKEW = 0;              // server_now - client_now (seconds), re-synced on start/resume
+let idx = 0, originIdx = 0;
+const FLAGS = {};          // qid -> true
+let TIMER_ID = null;
+let submitted = false;
+let _saveT = null;
+
+/* ---------- helpers ---------- */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function qidIndex(qid) { return QUESTIONS.findIndex(q => q.id === qid); }
+function saveSessionLocal() {
+  try { localStorage.setItem(LS_SESS, JSON.stringify({attempt_id: ATTEMPT_ID, nim: NIM, name: NAME})); } catch (_) {}
+}
+function saveAnswersLocal() {
+  try { localStorage.setItem(LS_ANS, JSON.stringify({attempt_id: ATTEMPT_ID, answers: ANSWERS})); } catch (_) {}
+}
+function clearSessionLocal() {
+  try { localStorage.removeItem(LS_SESS); localStorage.removeItem(LS_ANS); } catch (_) {}
+}
+function loadQuestionsCache() { return QUESTIONS; }
+
+async function fetchExam() {
+  if (QUESTIONS.length) return QUESTIONS;
+  const r = await fetch("/api/questions");
+  const exam = await r.json();
+  QUESTIONS = exam.questions || [];
+  const sub = document.getElementById("subline");
+  if (sub) sub.textContent = `${QUESTIONS.length} soal • ${exam.total_points} poin • ${exam.duration_minutes} menit`;
+  document.getElementById("coretanLinkText").textContent = CORETAN_URL;
+  return QUESTIONS;
+}
+
+/* ---------- start ---------- */
+async function startQuiz() {
+  NIM = document.getElementById("nim").value.trim();
+  NAME = document.getElementById("name").value.trim();
+  if (!NIM) { alert("Masukkan NIM Anda dulu."); return; }
+  if (!NAME) { alert("Masukkan nama lengkap Anda dulu."); return; }
+  if (!/^(2\d|30)\d{8}$/.test(NIM)) { alert("NIM harus 10 digit diawali tahun masuk 20-30 (contoh 2301901234)."); return; }
+  try { await fetchExam(); } catch (e) { alert("Gagal memuat soal."); return; }
+  let st;
+  try {
+    const fd = new FormData();
+    fd.append("nim", NIM); fd.append("name", NAME);
+    const r = await fetch("/api/start", { method: "POST", body: fd });
+    st = await r.json();
+    if (!r.ok) throw { message: st.detail || "Gagal memulai." };
+  } catch (e) { alert(e.message || "Gagal memulai ujian."); return; }
+  ATTEMPT_ID = st.attempt_id;
+  DEADLINE = st.started_at + st.duration_seconds;
+  SKEW = st.server_now - Date.now() / 1000;
+  ANSWERS = {};
+  saveSessionLocal(); saveAnswersLocal();
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  idx = 0;
+  startTimer();
+  render();
+}
+
+/* ---------- resume on refresh ---------- */
+async function tryResume() {
+  let sess = null, mir = null;
+  try { sess = JSON.parse(localStorage.getItem(LS_SESS) || "null"); } catch (_) {}
+  try { mir = JSON.parse(localStorage.getItem(LS_ANS) || "null"); } catch (_) {}
+  if (!sess || !sess.attempt_id) return false;
+  let data;
+  try {
+    const r = await fetch(`/api/session?attempt_id=${encodeURIComponent(sess.attempt_id)}`);
+    if (!r.ok) { clearSessionLocal(); return false; }
+    data = await r.json();
+  } catch (_) { return false; }
+  if (data.status === "submitted") {
+    // already finished on this browser — show the submitted state
+    NIM = data.nim; NAME = data.name; ATTEMPT_ID = data.attempt_id;
+    submitted = true;
+    document.getElementById("start").classList.add("hidden");
+    showSubmitted({attempt_no: data.attempt_no}, false, true);
+    return true;
+  }
+  try { await fetchExam(); } catch (_) { return false; }
+  // restore answers: server copy is truth; if the local mirror is newer (autosave
+  // may have lagged a keystroke), let local win per-key.
+  ANSWERS = {};
+  const server = data.answers || {};
+  const local = (mir && mir.attempt_id === data.attempt_id) ? (mir.answers || {}) : {};
+  for (const k of Object.keys(server)) ANSWERS[k] = server[k];
+  for (const k of Object.keys(local)) if (local[k] !== undefined && local[k] !== "") ANSWERS[k] = local[k];
+  NIM = data.nim; NAME = data.name; ATTEMPT_ID = data.attempt_id;
+  DEADLINE = data.started_at + data.duration_seconds;
+  SKEW = data.server_now - Date.now() / 1000;
+  saveSessionLocal(); saveAnswersLocal();
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  idx = 0;
+  if (remainingSeconds() <= 0) {
+    // time already ran out while they were away — auto-submit what was saved
+    onTimeUp();
+    return true;
+  }
+  startTimer();
+  render();
+  const banner = document.getElementById("resumeBanner");
+  if (banner) banner.classList.remove("hidden");
+  return true;
+}
+
+/* ---------- timer (server-anchored, skew-corrected) ---------- */
+function remainingSeconds() {
+  const clientNow = Date.now() / 1000;
+  return Math.max(0, Math.ceil(DEADLINE - (clientNow + SKEW)));
+}
+function startTimer() {
+  updateTimer();
+  if (TIMER_ID) clearInterval(TIMER_ID);
+  TIMER_ID = setInterval(tick, 1000);
+}
+function tick() {
+  updateTimer();
+  if (remainingSeconds() <= 0) { clearInterval(TIMER_ID); TIMER_ID = null; onTimeUp(); }
+}
+function stopTimer() { if (TIMER_ID) { clearInterval(TIMER_ID); TIMER_ID = null; } }
+function updateTimer() {
+  const left = remainingSeconds();
+  const m = Math.floor(left / 60), s = left % 60;
+  const txt = String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  for (const id of ["timer","ctimer"]) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = txt; el.classList.toggle("warn", left <= 300); }
+  }
+}
+
+/* ---------- render one question card ---------- */
+function render() {
+  const q = QUESTIONS[idx];
+  document.getElementById("qpos").textContent = `Soal ${idx+1} dari ${QUESTIONS.length}`;
+  document.getElementById("pfill").style.width = `${((idx+1)/QUESTIONS.length)*100}%`;
+  const card = document.getElementById("qcard");
+  let html = `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div><span class="secpill ${q.section}">${q.section}</span><span class="qnum">Soal ${idx+1}</span><span class="topic">${escapeHtml(q.topic)}</span><span class="poinpill">${q.points} poin</span></div>
+      <button type="button" class="flagbtn${FLAGS[q.id] ? " on" : ""}" onclick="toggleFlag(${q.id})">${FLAGS[q.id] ? "🚩 Ditandai" : "🚩 Tandai"}</button>
+    </div>
+    <div class="qtext">${escapeHtml(q.question)}</div>`;
+  if (q.section !== QUESTIONS[Math.max(0, idx-1)].section) {
+    // section divider note (renders above content of first card of section)
+    html = `<div class="card" style="background:#f1f5f9;box-shadow:none"><b>${SECTION_NAMES[q.section] || "Bagian " + q.section}</b></div>` + html;
+  }
+  if (q.table) {
+    html += `<table class="datatable"><caption>${escapeHtml(q.table.caption)}</caption><tr>${q.table.headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr>` +
+      q.table.rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(String(c))}</td>`).join("")}</tr>`).join("") + `</table>`;
+  }
+  if (q.params && q.params.length) {
+    html += `<table class="ptstable"><tr><th>Parameter</th><th>Nilai</th></tr>` +
+      q.params.map(p => `<tr><td>${escapeHtml(String(p[0]))}</td><td>${escapeHtml(String(p[1]))}</td></tr>`).join("") + `</table>`;
+  }
+  if (q.hint) html += `<div class="hintbox">${escapeHtml(q.hint)}</div>`;
+  if (q.type === "mcq") {
+    q.options.forEach((opt, i) => {
+      const sel = ANSWERS[q.id] === i || ANSWERS[q.id] === String(i) ? " sel" : "";
+      html += `<label class="opt${sel}">
+        <input type="radio" name="q${q.id}" value="${i}" ${sel ? "checked" : ""} onchange="pick(${q.id}, ${i})">
+        ${escapeHtml(opt)}
+      </label>`;
+    });
+  } else if (q.type === "text") {
+    const a = ANSWERS[q.id] !== undefined ? ANSWERS[q.id] : "";
+    if (q.kind === "num") {
+      html += `<div class="numfield"><label>Jawaban (angka)</label>
+        <input type="text" id="inp_${q.id}" class="numline" inputmode="decimal" autocomplete="off" placeholder="contoh: 5.3 atau 5,3" value="${escapeHtml(a)}" oninput="textPick('${q.id}', this)">
+      </div>`;
+    } else {
+      html += `<textarea id="inp_${q.id}" class="txtin" rows="5" oninput="textPick('${q.id}', this)">${escapeHtml(a)}</textarea>`;
+    }
+  } else if (q.type === "group") {
+    q.subs.forEach((s, si) => {
+      const key = `${q.id}${s.key}`;
+      html += `<div class="subblock">
+        <div class="subhead"><span class="subkey">${escapeHtml(s.key)})</span><span class="subpoin">${s.points} poin</span></div>
+        <div class="qtext" style="margin:2px 0 8px">${escapeHtml(s.question)}</div>`;
+      if (s.inputs && s.inputs.length) {
+        const cols = s.inputs.length > 6 ? 4 : (s.inputs.length > 2 ? 3 : 2);
+        html += `<div class="ingrid" style="grid-template-columns:repeat(${Math.min(cols, 4)}, minmax(0,1fr))">`;
+        s.inputs.forEach(inp => {
+          const ikey = `${key}_${inp.key}`;
+          const a = ANSWERS[ikey] !== undefined ? ANSWERS[ikey] : "";
+          const ph = inp.placeholder || (inp.kind === "num" ? "contoh: 5.3" : "");
+          html += `<div class="infield">
+            <label>${escapeHtml(inp.label || inp.key)}</label>`;
+          if (inp.kind === "num") {
+            html += `<input type="text" id="inp_${ikey}" class="numline" inputmode="decimal" autocomplete="off" placeholder="${escapeHtml(ph)}" value="${escapeHtml(a)}" oninput="textPick('${ikey}', this)">`;
+          } else {
+            html += `<input type="text" id="inp_${ikey}" class="txtline" autocomplete="off" placeholder="${escapeHtml(ph)}" value="${escapeHtml(a)}" oninput="textPick('${ikey}', this)">`;
+          }
+          html += `</div>`;
+        });
+        html += `</div>`;
+      } else if (s.kind === "num") {
+        html += `<input type="text" id="inp_${key}" class="numline" inputmode="decimal" autocomplete="off" placeholder="${escapeHtml(s.placeholder || "contoh: 5.3 atau 5,3")}" value="${escapeHtml(ANSWERS[key] !== undefined ? ANSWERS[key] : "")}" oninput="textPick('${key}', this)">`;
+      } else {
+        const ph = s.placeholder ? ` placeholder="${escapeHtml(s.placeholder)}"` : "";
+        html += `<textarea id="inp_${key}" class="txtin" rows="3"${ph} oninput="textPick('${key}', this)">${escapeHtml(ANSWERS[key] !== undefined ? ANSWERS[key] : "")}</textarea>`;
+      }
+      html += `</div>`;
+    });
+  }
+  html += `</div>`;
+  card.innerHTML = html;
+
+  const isLast = idx === QUESTIONS.length - 1;
+  document.getElementById("btnPrev").classList.toggle("hidden", idx === 0);
+  document.getElementById("btnNext").classList.toggle("hidden", isLast);
+  document.getElementById("btnSubmit").classList.toggle("hidden", !isLast);
+  const wr = document.getElementById("wrapRingkasan");
+  if (wr) wr.classList.toggle("hidden", isLast);
+  updateHint(q.id);
+  window.scrollTo({top: 0});
+}
+
+function isFilled(key) {
+  const a = ANSWERS[key];
+  return !(a === undefined || a === null || a === "");
+}
+// list of answer keys for one question (inputs expand to individual slots)
+function keysForQ(q) {
+  const keys = [];
+  if (q.type === "group") {
+    q.subs.forEach(s => {
+      if (s.inputs && s.inputs.length) {
+        s.inputs.forEach(inp => keys.push(`${q.id}${s.key}_${inp.key}`));
+      } else {
+        keys.push(`${q.id}${s.key}`);
+      }
+    });
+  } else {
+    keys.push(String(q.id));
+  }
+  return keys;
+}
+function updateHint(qid) {
+  const q = QUESTIONS.find(x => x.id === qid);
+  if (!q) return;
+  const keys = keysForQ(q);
+  const filled = keys.every(k => isFilled(k));
+  const hint = document.getElementById("pickhint");
+  if (hint) {
+    if (filled) { hint.textContent = "Jawaban tercatat — gunakan Berikutnya/Sebelumnya."; hint.classList.add("ready"); }
+    else { hint.textContent = "Boleh lanjut dulu — lewat Ringkasan Jawaban bisa dicek nanti."; hint.classList.remove("ready"); }
+  }
+}
+
+/* ---------- answer capture ---------- */
+function pick(qid, i) {
+  ANSWERS[qid] = i;
+  const card = document.getElementById("qcard");
+  card.querySelectorAll("label.opt").forEach(el => {
+    const radio = el.querySelector("input");
+    if (radio.name === `q${qid}`) { el.classList.toggle("sel", Number(radio.value) === i); radio.checked = (Number(radio.value) === i); }
+  });
+  updateHint(qid);
+  markDirty();
+}
+function textPick(key, el) {
+  const v = el.value.trim();
+  if (v) { ANSWERS[key] = v; } else { delete ANSWERS[key]; }
+  const qid = QUESTIONS.find(q => q.type === "group"
+    ? q.subs.some(s => `${q.id}${s.key}` === key
+        || (s.inputs && s.inputs.some(inp => `${q.id}${s.key}_${inp.key}` === key)))
+    : String(q.id) === key)?.id;
+  if (qid !== undefined) updateHint(qid);
+  markDirty();
+}
+function next() { if (idx >= QUESTIONS.length - 1) return; idx++; markDirty(); render(); }
+function prev() { if (idx <= 0) return; idx--; markDirty(); render(); }
+
+/* ---------- autosave ---------- */
+function markDirty() {
+  saveAnswersLocal();              // instant local mirror (offline-safe)
+  if (!ATTEMPT_ID || submitted) return;
+  if (_saveT) clearTimeout(_saveT);
+  _saveT = setTimeout(doAutosave, 900);   // debounce network autosave
+}
+async function doAutosave() {
+  if (!ATTEMPT_ID || submitted) return;
+  try {
+    const fd = new FormData();
+    fd.append("attempt_id", ATTEMPT_ID);
+    fd.append("answers", JSON.stringify(ANSWERS));
+    await fetch("/api/save", { method: "POST", body: fd, keepalive: true });
+  } catch (_) { /* silent — local mirror still has it; next keystroke retries */ }
+}
+window.addEventListener("pagehide", () => {
+  if (ATTEMPT_ID && !submitted) doAutosave();
+});
+
+/* ---------- flag ---------- */
+function toggleFlag(qid) {
+  if (FLAGS[qid]) delete FLAGS[qid]; else FLAGS[qid] = true;
+  render();
+}
+
+/* ---------- review / summary ---------- */
+function openConfirm() {
+  originIdx = idx;
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("confirm").classList.remove("hidden");
+  renderAnswerSummary();
+  window.scrollTo({top: 0});
+}
+function goToQuestion(i) {
+  if (i < 0 || i >= QUESTIONS.length) return;
+  document.getElementById("confirm").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  idx = i; render();
+}
+function goBackToQuiz() { goToQuestion(originIdx); }
+
+// Flatten one row PER SUB/plain question (inputs joined in the row).
+// key: the sub's base key (or question id); filled requires ALL its input slots.
+function allSlots() {
+  const out = [];
+  QUESTIONS.forEach(q => {
+    if (q.type === "group") {
+      q.subs.forEach(s => {
+        const base = `${q.id}${s.key}`;
+        if (s.inputs && s.inputs.length) {
+          const keys = s.inputs.map(inp => `${base}_${inp.key}`);
+          out.push({key: base, keys, labels: s.inputs.map(inp => inp.label || inp.key),
+                    label: `No. ${base}`, qid: q.id, points: s.points,
+                    filled: keys.every(k => isFilled(k))});
+        } else {
+          out.push({key: base, keys: [base], labels: null,
+                    label: `No. ${base}`, qid: q.id, points: s.points,
+                    filled: isFilled(base)});
+        }
+      });
+    } else {
+      const key = String(q.id);
+      out.push({key, keys: [key], labels: null,
+                label: `No. ${q.id}`, qid: q.id, points: q.points,
+                filled: isFilled(key)});
+    }
+  });
+  return out;
+}
+function missingSlots() {
+  return allSlots().filter(s => !s.filled);
+}
+
+function renderAnswerSummary() {
+  const el = document.getElementById("answersummary");
+  if (!el || !QUESTIONS.length) return;
+  const slots = allSlots();
+  const flaggedQids = new Set(slots.filter(s => FLAGS[s.qid] === true).map(s => s.qid));
+  const flaggedCount = flaggedQids.size;
+  let missingCount = 0;
+  let html = "";
+  slots.forEach(s => {
+    if (!s.filled) missingCount++;
+    let ansTxt = "(belum diisi)";
+    if (s.filled) {
+      const q = QUESTIONS.find(x => x.id === s.qid);
+      if (q && q.type === "mcq") {
+        const a = ANSWERS[s.key];
+        const i = typeof a === "string" ? Number(a) : a;
+        ansTxt = (q.options[i] !== undefined) ? `${"ABCDEFGHIJ"[i]}. ${q.options[i]}` : String(a);
+      } else if (s.labels) {
+        // multi-input sub: "z1: 0.5 · H1: 0.62"
+        ansTxt = s.keys.map((k, i) => `${s.labels[i]}: ${ANSWERS[k]}`).join("  ·  ");
+        if (ansTxt.length > 90) ansTxt = ansTxt.slice(0, 90) + "…";
+      } else {
+        const a = ANSWERS[s.key];
+        ansTxt = String(a).length > 90 ? String(a).slice(0, 90) + "…" : String(a);
+      }
+    }
+    // chip on this question's first slot only
+    const isFirstSlot = slots.findIndex(x => x.qid === s.qid) === slots.indexOf(s);
+    const showFlag = FLAGS[s.qid] === true && isFirstSlot;
+    html += `<div class="sumrow" onclick="goToQuestion(${qidIndex(s.qid)})" title="Kembali ke ${s.label}">
+      <span class="idx">${escapeHtml(s.label.replace("No. ",""))}</span>
+      <span class="ans${s.filled ? "" : " missing"}"><span class="lbl">Jawaban:</span> <span class="ansprev">${escapeHtml(ansTxt)}</span></span>
+      ${showFlag ? '<span class="sumflag">🚩 Ditandai</span>' : ""}
+    </div>`;
+  });
+  let stats;
+  if (missingCount) stats = `<p style="margin:0 0 8px;font-size:.8rem;color:#b91c1c;font-weight:700">${missingCount} jawaban belum diisi — ketuk nomornya untuk mengisi.</p>`;
+  else if (flaggedCount) stats = `<p style="margin:0 0 8px;font-size:.8rem;color:#92400e;font-weight:700">🚩 ${flaggedCount} soal ditandai untuk diperiksa lagi</p>`;
+  else stats = `<p style="margin:0 0 8px;font-size:.8rem;color:#64748b">Ketuk nomor untuk kembali ke soal itu.</p>`;
+  el.innerHTML = stats + html;
+}
+
+/* ---------- submit ---------- */
+async function submitQuiz() {
+  const missing = missingSlots();
+  if (missing.length) {
+    const labels = missing.map(s => s.label.replace("No. ","")).join(", ");
+    alert("Jawaban tidak dikirim — masih ada yang belum diisi: " + labels + ".");
+    return;
+  }
+  if (!confirm("Yakin ingin mengirim jawaban? Setelah terkirim, jawaban tidak dapat diubah.")) return;
+  const btn = document.getElementById("btnConfirm");
+  btn.disabled = true; btn.textContent = "Mengirim...";
+  try {
+    const data = await postAnswers();
+    stopTimer(); submitted = true;
+    // keep local session so a refresh shows "sudah terkirim" (no accidental restart)
+    saveSessionLocal(); saveAnswersLocal();
+    showSubmitted(data, false);
+  } catch (e) {
+    alert(e.message || "Pengiriman gagal.");
+    btn.disabled = false; btn.textContent = "Kirim Jawaban";
+  }
+}
+async function onTimeUp() {
+  if (submitted) return;
+  stopTimer(); submitted = true;
+  try {
+    const data = await postAnswers();
+    saveSessionLocal(); saveAnswersLocal();
+    showSubmitted(data, true);
+  } catch (e) {
+    submitted = false;
+    alert("Waktu habis, tetapi pengiriman otomatis gagal. Hubungi pengawas.");
+  }
+}
+async function postAnswers() {
+  const fd = new FormData();
+  fd.append("nim", NIM);
+  fd.append("name", NAME);
+  fd.append("answers", JSON.stringify(ANSWERS));
+  if (ATTEMPT_ID) fd.append("attempt_id", ATTEMPT_ID);
+  const r = await fetch("/api/submit", { method: "POST", body: fd });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw { message: data.detail || "Pengiriman gagal." };
+  return data;
+}
+function showSubmitted(data, expired, resumedAlready) {
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("confirm").classList.add("hidden");
+  const res = document.getElementById("result");
+  res.classList.remove("hidden");
+  const head = resumedAlready
+    ? "✅ Jawaban Anda sudah terkirim sebelumnya."
+    : (expired ? "⏰ Waktu habis — jawaban Anda terkirim otomatis." : "✅ Jawaban Anda telah terkirim.");
+  res.innerHTML = `<div class="okbox">${head}</div>
+      <div class="card">
+        <p style="margin:0;font-weight:700">Terima kasih, ${escapeHtml(NAME)}!</p>
+        <p style="margin:8px 0 0;color:#666">Jawaban Anda sudah kami terima. Anda boleh menutup halaman ini.</p>
+      </div>
+      <div style="margin-top:14px;text-align:center">
+        <p style="margin:0 0 4px;font-size:.9rem;color:#666">Belum mengunggah coretan? Link (opsional):</p>
+        <p style="margin:0;font-family:monospace;font-size:.9rem;color:#2563eb;word-break:break-all">${escapeHtml(CORETAN_URL)}</p>
+      </div>
+      <div style="margin-top:18px;text-align:center">
+        <button class="btn outline" style="width:auto;padding:10px 18px;font-size:.85rem" onclick="newAttempt()">Mulai percobaan baru</button>
+      </div>`;
+  window.scrollTo({top: 0});
+}
+
+// Deliberate retake: clear the finished session and show the start card.
+// Logs as a NEW attempt (attempt_no+1) on the next Mulai Kuis — visible to admin.
+function newAttempt() {
+  clearSessionLocal();
+  submitted = false;
+  ATTEMPT_ID = null;
+  stopTimer();
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("start").classList.remove("hidden");
+  document.getElementById("nim").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("subline").textContent = "Masukkan NIM dan nama untuk memulai ujian.";
+  window.scrollTo({top: 0});
+}
+
+/* ---------- boot: meta fill + resume if a session exists ---------- */
+(async function boot() {
+  try { await fetchExam(); } catch (_) {}
+  await tryResume();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# runtime state — never commit student data
+data/
+*.db
+*.db-journal
+*.xlsx
+*.docx
+
+# python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.egg-info/
+
+# editor/OS
+.DS_Store
+*.bak
+*.bak-*
